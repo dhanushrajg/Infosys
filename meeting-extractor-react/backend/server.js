@@ -1,7 +1,7 @@
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path');
 const { extract } = require('./extractor');
-try { for (const l of fs.readFileSync('.env', 'utf8').split('\n')) { const m = l.match(/^([A-Z_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2]; } } catch {}
+try { for (const l of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/)) { const m = l.match(/^([A-Z_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim(); } } catch {}
 const MAX = 50000, TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 const server = http.createServer(async (req, res) => {
   const send = (c, o) => { res.writeHead(c, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(o)); };
@@ -14,7 +14,7 @@ const server = http.createServer(async (req, res) => {
     if (notes.length > MAX) return send(400, { error: `Notes exceed ${MAX} characters.` });
     return send(200, await extract(notes));
   }
-  const dist = path.join(__dirname, 'dist');
+  const dist = path.join(__dirname, '..', 'frontend', 'dist');
   let rel; try { rel = req.url === '/' ? 'index.html' : decodeURIComponent(req.url.split('?')[0]); } catch { return send(400, { error: 'Bad URL' }); }
   const f = path.join(dist, rel);
   if (!f.startsWith(dist)) return send(403, { error: 'Forbidden' });
